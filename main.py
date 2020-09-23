@@ -5,4 +5,5 @@ if __name__ == '__main__':
     with open('config.json', 'r') as fp:
         config = json.load(fp)
 
-    print(config)
+    tester = StressTester(**config)
+    print(tester._influx_url)
