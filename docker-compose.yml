@@ -1,0 +1,31 @@
+version: "3"
+
+services:
+    influxdb:
+        build: docker_images/influxdb
+        ports:
+        - 8090:8090
+        volumes:
+        - ./influxdb_share:/var/lib/influxdb
+        command: -config /etc/influxdb/influxdb.conf
+
+    ogamma-logger:
+        build: docker_images/ogamma-logger
+        ports:
+        - 8091:8091
+        volumes:
+        - ./ogamma-logger_share:/home/ogamma/logger/data
+        links:
+        - influxdb
+
+    grafana:
+        image: grafana/grafana
+        environment:
+        - GF_SERVER_HTTP_PORT=8092
+        ports:
+        - 8092:8092
+        volumes:
+        - ./grafana_share:/var/lib/grafana
+        links:
+        - influxdb
+        - ogamma-logger
