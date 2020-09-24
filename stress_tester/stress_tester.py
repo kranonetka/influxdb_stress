@@ -5,6 +5,7 @@ from datetime import datetime
 import random
 import string
 from itertools import chain
+from contextlib import contextmanager
 
 
 class StressTester:
@@ -37,48 +38,84 @@ class StressTester:
         self.ping()
 
     def _set_start_time(self):
+        """
+        Служебный метод для того, чтобы засечь время начала операции над InfluxDB
+        """
         self._start_time = time.time()
 
     def _set_end_time(self):
+        """
+        Служебный метод для того, чтобы засечь время конца операции над InfluxDB
+        """
         self._end_time = time.time()
+
+    @contextmanager
+    def _timeit(self):
+        """
+        Служебный контекстный менеджер для засекания времени выполнения однопоточных операций
+        """
+        try:
+            self._set_start_time()
+            yield
+            self._set_end_time()
+        finally:
+            pass
 
     @property
     def time_diff(self):
+        """
+        :return: Разница (в секундах), затраченная на выполнение последней операции над InfluxDB
+        """
         return self._end_time - self._start_time
 
     @property
-    def random_float(self):
+    def random_float(self) -> str:
+        """
+        :return: Случайное вещественное число из диапазона [0;1000) для записи в InfluxDB
+        """
         return '{:.5e}'.format(random.random() * 1000)
 
     @property
-    def random_int(self):
+    def random_int(self) -> str:
+        """
+        :return: Случайное целое число из диапазона [0; 10000) для записи в InfluxDB
+        """
         return f'{random.randrange(1000)}i'
 
     @property
-    def random_str(self):
+    def random_str(self) -> str:
+        """
+        :return: Случайная строка длина 60 для записи в InfluxDB
+        """
         return '"{}"'.format(''.join(random.choices(string.ascii_letters, k=60)))
 
     @property
-    def random_bool(self):
+    def random_bool(self) -> str:
+        """
+        :return: Случайное булево значение для записи в InfluxDB
+        """
         return random.choice('tf')
 
     def ping(self):
         """
         Проверка доступности InfluxDB
         """
-        requests.get(self._ping_endpoint, headers=self._headers).raise_for_status()
+        with self._timeit():
+            requests.get(self._ping_endpoint, headers=self._headers).raise_for_status()
 
     def create_db(self):
         """
         Создание БД
         """
-        requests.post(self._query_endpoint, params=self._create_db_params, headers=self._headers)
+        with self._timeit():
+            requests.post(self._query_endpoint, params=self._create_db_params, headers=self._headers)
 
     def drop_db(self):
         """
         Удаление БД
         """
-        requests.post(self._query_endpoint, params=self._drop_db_params, headers=self._headers)
+        with self._timeit():
+            requests.post(self._query_endpoint, params=self._drop_db_params, headers=self._headers)
 
     def write(self,
               nodes_count: int,
@@ -91,14 +128,15 @@ class StressTester:
         """
         Одновременная запись несколькими потоками
 
-        :param nodes_count: Количество одновременно пишущих узлов
+        :param nodes_count: Количество одновременно пишущих узлов (потоков)
         :param float_sensors: Количество вещественных датчиков на узле
         :param int_sensors: Количество целочисленных датчиков на узле
         :param str_sensors: Количество строковых датчиков на узле
         :param bool_sensors: Количество булевых датчиков на узле
         :param duration: На протяжении скольки секунд копились данные для записи каждым узлом
         :param start_date: Начиная с какой даты вести запись. По умолчанию - локальная дата запуска метода
-        :return: Время (в секундах), затраченное на запись
+        :return: Время (в секундах), прошедшее с момента одновременного начала отправки данных каждым потоком
+            до момента получения ответа каждым из потоков
         """
         if start_date is None:
             start_date = datetime.now()
@@ -152,4 +190,4 @@ class StressTester:
         """q=SELECT mean("v") FROM "autogen"."ogamma_measurement"
         WHERE ("n" = 'Temperature') AND time >= now() - 5m
         GROUP BY time(200ms) fill(none)"""
-        pass
+        raise NotImplementedError("Чтение не реализовано")
