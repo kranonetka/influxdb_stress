@@ -6,4 +6,4 @@ if __name__ == '__main__':
         config = json.load(fp)
 
     tester = StressTester(**config)
-    print(tester._influx_url)
+    tester.write(100)
