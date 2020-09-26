@@ -1,4 +1,4 @@
-*_share
+shares
 .idea
-__pycache__/
+__pycache__
 docs/build

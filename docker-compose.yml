@@ -6,7 +6,7 @@ services:
         ports:
         - 8090:8090
         volumes:
-        - ./influxdb_share:/var/lib/influxdb
+        - ./shares/influxdb_share:/var/lib/influxdb
         command: -config /etc/influxdb/influxdb.conf
 
     ogamma-logger:
@@ -14,7 +14,7 @@ services:
         ports:
         - 8091:8091
         volumes:
-        - ./ogamma-logger_share:/home/ogamma/logger/data
+        - ./shares/ogamma-logger_share:/home/ogamma/logger/data
         links:
         - influxdb
 
@@ -25,7 +25,7 @@ services:
         ports:
         - 8092:8092
         volumes:
-        - ./grafana_share:/var/lib/grafana
+        - ./shares/grafana_share:/var/lib/grafana
         links:
         - influxdb
         depends_on:
