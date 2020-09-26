@@ -9,6 +9,7 @@ InfluxDB Stress Test
 
 Инициализация окружения
 -----------------------
+
 Инструмент написан с использованием ЯП `Python 3.8 <https://www.python.org/downloads/>`_
 и инструментом для работы с виртуальным окружением `pipenv <https://pipenv-fork.readthedocs.io/en/latest/>`_
 
@@ -31,7 +32,7 @@ InfluxDB Stress Test
 Документация
 ------------
 
-Чтобы посмотреть документацию, необходимо выполнить доустановить в виртуальное окружение
+Чтобы посмотреть документацию, необходимо доустановить в виртуальное окружение
 инструменты для создания документации
 
 .. code:: sh
@@ -39,9 +40,32 @@ InfluxDB Stress Test
     pipenv install --dev
 
 После чего из папки docs выполнить ``make``. В ``docs/build/html`` появятся HTML файлы с документацией,
-которые можно посмотреть в любом браузере. Точкой входа является ``index.html``
+которые можно посмотреть в любом браузере. Точкой входа является ``index.html``.
 
 Документация содержит описание методов класса для тестирования и примеры реализации
 некоторых тестовых сценариев.
 
-.. _Python 3.8:: https://www.python.org/downloads/
+Локальная тестовая среда
+------------------------
+
+Репозиторий содержит ``docker-compose.yml`` для развёртывания тестовой среды из:
+
+    - `InfluxDB <https://www.influxdata.com/products/influxdb-overview/>`_ - целевая СУБД ВР для тестирования
+    - `ogamma Visual Logger for OPC <https://www.onewayautomation.com/index.php/visual-logger>`_ - инструмент для транслирования данных с OPC UA серверов в СУБД ВР
+    - `Grafana <https://grafana.com/>`_ - инструмент для интерактивной визуализации данных
+
+Достаточно выполнить развёртывание окружения
+
+.. code:: sh
+
+    docker-compose up --build
+
+После чего сконфигурировать ``ogamma Visual Logger for OPC`` и ``Grafana`` для использования с ``InfluxDB``.
+
+Порты сервисов:
+
+    - ``InfluxDB`` доступна на порту 8090
+    - ``ogamma Visual Logger for OPC`` - 8091
+    - ``Grafana`` - 8092
+
+Сервисы ``ogamma Visual Logger for OPC`` и ``Grafana`` видят ``InfluxDB`` по адресу ``influxdb``.
