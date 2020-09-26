@@ -73,28 +73,28 @@ class StressTester:
         return self._end_time - self._start_time
 
     @property
-    def random_float(self) -> str:
+    def _random_float(self) -> str:
         """
         :return: Случайное вещественное число из диапазона [0;1000) для записи в InfluxDB
         """
         return '{:.5e}'.format(random.random() * 1000)
 
     @property
-    def random_int(self) -> str:
+    def _random_int(self) -> str:
         """
         :return: Случайное целое число из диапазона [0; 10000) для записи в InfluxDB
         """
         return f'{random.randrange(1000)}i'
 
     @property
-    def random_str(self) -> str:
+    def _random_str(self) -> str:
         """
         :return: Случайная строка длина 60 для записи в InfluxDB
         """
         return '"{}"'.format(''.join(random.choices(string.ascii_letters, k=60)))
 
     @property
-    def random_bool(self) -> str:
+    def _random_bool(self) -> str:
         """
         :return: Случайное булево значение для записи в InfluxDB
         """
@@ -156,10 +156,10 @@ class StressTester:
             payload = '\n'.join(
                 '\n'.join(
                     chain(
-                        (time_template.format('float', self.random_float) for _ in range(float_sensors)),
-                        (time_template.format('int', self.random_int) for _ in range(int_sensors)),
-                        (time_template.format('str', self.random_str) for _ in range(str_sensors)),
-                        (time_template.format('bool', self.random_bool) for _ in range(bool_sensors)),
+                        (time_template.format('float', self._random_float) for _ in range(float_sensors)),
+                        (time_template.format('int', self._random_int) for _ in range(int_sensors)),
+                        (time_template.format('str', self._random_str) for _ in range(str_sensors)),
+                        (time_template.format('bool', self._random_bool) for _ in range(bool_sensors)),
                     )
                 )
                 for time_template in map(

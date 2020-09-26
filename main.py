@@ -1,38 +1,43 @@
 from stress_tester import StressTester
-import json
 from datetime import datetime, timedelta
 
-sensors = dict(
-    float_sensors=10,
-    int_sensors=0,
-    str_sensors=0,
-    bool_sensors=0
-)
 
 if __name__ == '__main__':
-    with open('config.json', 'r') as fp:
-        config = json.load(fp)
+    tester = StressTester(
+        host='localhost',
+        port='8090'
+    )
 
-    tester = StressTester(**config)
     tester.drop_db()
-    print(f'На удаление БД затрачено {tester.time_diff:.2f} сек.')
+    print(f'Удаление БД заняло {tester.time_diff:.2f} сек.')
 
     tester.create_db()
-    print(f'На создание БД затрачено {tester.time_diff:.2f} сек.')
+    print(f'Создание БД заняло {tester.time_diff:.2f} сек.')
 
-    tester.write(
+    nodes_count = 100
+    duration = 60 * 15
+
+    print(f'Записываем смешанные данные, которые копились с {nodes_count} узлов в течение {duration} сек.')
+
+    delay = tester.write(
+        nodes_count=nodes_count,
+        float_sensors=6,
+        int_sensors=0,
+        bool_sensors=3,
+        str_sensors=0,
+        duration=duration,
+        start_date=datetime.now() - timedelta(minutes=5)
+    )
+
+    print(f'Запись накопившихся за {duration} секунд смешанных данных с {nodes_count} узлов '
+          f'заняла {delay:.2f} сек.')
+
+    delay, response = tester.read(
         nodes_count=1,
-        duration=60 * 5,
-        **sensors,
-        start_date=datetime(2020, 1, 1)
+        aggregation='sum',
+        type='float',
+        time_interval='5s'
     )
-    print(f'На запись затрачено {tester.time_diff:.2f} сек.')
 
-    _, resp = tester.read(
-        5,
-        start_date=datetime(2020, 1, 1),
-        end_date=datetime(2020, 1, 1) + timedelta(minutes=5),
-        time_interval='1s'
-    )
-    print(f'На чтение затрачено {tester.time_diff:.2f} сек.')
-    print(f'Результат выборки: {resp}')
+    print(f'Чтение оперативных данных за последние 5 минут одним узлом '
+          f'заняло {delay:.2f} сек.')

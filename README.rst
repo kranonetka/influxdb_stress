@@ -3,7 +3,7 @@ InfluxDB Stress Test
 
 Инструмент для нагрузочного тестирования СУБД временных рядов InfluxDB
 
-.. contents:: Содержимое:
+.. contents:: Содержание:
    :backlinks: top
    :local:
 
@@ -39,7 +39,7 @@ InfluxDB Stress Test
 
     pipenv install --dev
 
-После чего из папки docs выполнить
+После чего из папки ``docs`` выполнить
 
 .. code:: sh
 
