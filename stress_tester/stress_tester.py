@@ -1,3 +1,5 @@
+from typing import Union, Tuple
+
 import requests
 import time
 from threading import Barrier, Thread, current_thread
@@ -6,6 +8,8 @@ import random
 import string
 from itertools import chain
 from contextlib import contextmanager
+from functools import partial
+from operator import mul
 
 
 class StressTester:
@@ -20,10 +24,10 @@ class StressTester:
         self._query_endpoint = self._influxdb_url + '/query'
         self._create_db_params = dict(q=f'CREATE DATABASE "{db}"')
         self._drop_db_params = dict(q=f'DROP DATABASE "{db}"')
-        self._read_params = dict(epoch=precision)
+        self._default_read_params = dict(db=db, epoch=precision)
 
         if precision == 'ms':
-            self._second_multiplier = 1000
+            self._second_multiplier = partial(mul, 1000)
         else:
             raise NotImplementedError('Не реализована точность, отличная от ms')
 
@@ -144,7 +148,7 @@ class StressTester:
         start_writing = Barrier(nodes_count, action=self._set_start_time)
         end_writing = Barrier(nodes_count, action=self._set_end_time)
 
-        start_timestamp_ms = int(start_date.timestamp() * self._second_multiplier)
+        start_timestamp_ms = int(self._second_multiplier(start_date.timestamp()))
 
         def _thread_func():
             dot_template = 'python_measurement,thread={} {{{{}}}}={{{{}}}},q=0 {{}}'.format(current_thread().name)
@@ -163,7 +167,7 @@ class StressTester:
                     map(
                         start_timestamp_ms.__add__,
                         map(
-                                self._second_multiplier.__mul__,
+                                self._second_multiplier,
                                 range(duration)
                             )
                         )
@@ -178,7 +182,6 @@ class StressTester:
         name_string = f'{{:0>{nodes_count_digits}}}'
         threads = [Thread(target=_thread_func, name=name_string.format(i+1)) for i in range(nodes_count)]
 
-        self.create_db()
         for thread in threads:
             thread.start()
         for thread in threads:
@@ -186,8 +189,60 @@ class StressTester:
 
         return self.time_diff
 
-    def read(self):
-        """q=SELECT mean("v") FROM "autogen"."ogamma_measurement"
-        WHERE ("n" = 'Temperature') AND time >= now() - 5m
-        GROUP BY time(200ms) fill(none)"""
-        raise NotImplementedError("Чтение не реализовано")
+    def read(self,
+             nodes_count: int,
+             aggregation: str = 'mean',
+             type: str = 'float',
+             start_date: Union[datetime, str] = 'now() - 5m',
+             end_date: Union[datetime, str] = 'now()',
+             time_interval: str = '5s') -> Tuple[float, dict]:
+        """
+        Одновременная запись несколькими потоками
+
+        :param nodes_count: Количество одновременно читающих узлов (потоков)
+        :param aggregation: Функция агрегации, применяемая к группам. По умолчанию mean
+        :param type: Тип читаемых значений. По умолчанию float
+        :param start_date: Начало временного окна. Задаётся в виде datetime объекта,
+            либо строкой по правилам синтаксиса InfluxDB
+            (см. https://docs.influxdata.com/influxdb/v1.8/query_language/explore-data/#time-syntax)
+        :param end_date: Конец временного окна. Задаётся в виде datetime объекта,
+            либо строкой по правилам синтаксиса InfluxDB
+            (см. https://docs.influxdata.com/influxdb/v1.8/query_language/explore-data/#time-syntax)
+        :param time_interval: Временной интервал для группировки. Задаётся строкой по правилам синтаксиса Influxdb
+            (см. https://docs.influxdata.com/influxdb/v1.8/query_language/spec/#durations)
+        :return: Время (в секундах), прошедшее с момента одновременного начала чтения данных каждым потоком
+            до момента получения ответа каждым из потоков и результат выборки
+        """
+
+        ready_to_read = Barrier(nodes_count, action=self._set_start_time)
+        finished_reading = Barrier(nodes_count, action=self._set_end_time)
+
+        if isinstance(start_date, datetime):
+            start_date = int(self._second_multiplier(start_date.timestamp()))
+            start_date = f'{start_date}ms'
+
+        if isinstance(end_date, datetime):
+            end_date = int(self._second_multiplier(end_date.timestamp()))
+            end_date = f'{end_date}ms'
+
+        query = f'SELECT {aggregation}("{type}") FROM "autogen"."python_measurement" ' \
+                f'WHERE {start_date} <= time AND time <= {end_date} ' \
+                f'GROUP BY time({time_interval})'
+
+        params = dict(self._default_read_params, q=query)
+
+        def _thread_func():
+            ready_to_read.wait()
+            requests.get(self._query_endpoint, params=params, headers=self._headers)
+            finished_reading.wait()
+
+        threads = [Thread(target=_thread_func) for _ in range(nodes_count)]
+
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+
+        result = requests.get(self._query_endpoint, params=params, headers=self._headers).json()
+
+        return self.time_diff, result
