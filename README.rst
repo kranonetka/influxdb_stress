@@ -3,7 +3,7 @@ InfluxDB Stress Test
 
 Инструмент для нагрузочного тестирования СУБД временных рядов InfluxDB
 
-.. contents:: Содержимое
+.. contents:: Содержимое:
    :backlinks: top
    :local:
 
@@ -11,7 +11,7 @@ InfluxDB Stress Test
 -----------------------
 
 Инструмент написан с использованием ЯП `Python 3.8 <https://www.python.org/downloads/>`_
-и инструментом для работы с виртуальным окружением `pipenv <https://pipenv-fork.readthedocs.io/en/latest/>`_
+и инструмента для работы с виртуальным окружением Python `pipenv <https://pipenv-fork.readthedocs.io/en/latest/>`_
 
 .. code:: sh
 
@@ -33,13 +33,19 @@ InfluxDB Stress Test
 ------------
 
 Чтобы посмотреть документацию, необходимо доустановить в виртуальное окружение
-инструменты для создания документации
+пакеты для создания документации
 
 .. code:: sh
 
     pipenv install --dev
 
-После чего из папки docs выполнить ``make``. В ``docs/build/html`` появятся HTML файлы с документацией,
+После чего из папки docs выполнить
+
+.. code:: sh
+
+    make html
+
+В ``docs/build/html`` появятся HTML файлы с документацией,
 которые можно посмотреть в любом браузере. Точкой входа является ``index.html``.
 
 Документация содержит описание методов класса для тестирования и примеры реализации
@@ -60,7 +66,8 @@ InfluxDB Stress Test
 
     docker-compose up --build
 
-После чего сконфигурировать ``ogamma Visual Logger for OPC`` и ``Grafana`` для использования с ``InfluxDB``.
+После чего ``InfluxDB`` сразу готова к работе. По желанию можно сконфигурировать
+``ogamma Visual Logger for OPC`` и ``Grafana`` для использования с ``InfluxDB``.
 
 Порты сервисов:
 
