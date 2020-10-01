@@ -1,5 +1,12 @@
 name: Build and update docs on push
-on: push
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   build-docs:
@@ -36,8 +43,8 @@ jobs:
 
       - name: Updating docs
         run: |
-          git rm -rf docs/${{ github.event.repository.name }} || echo "Docs for ${{ github.event.repository.name }} not found on ${GITHUB_ACTOR}.github.io.git, creating..."
-          mkdir docs/${{ github.event.repository.name }}
+          git rm -rf docs/${{ github.event.repository.name }} || echo "Docs for ${{ github.event.repository.name }} not found on ${GITHUB_ACTOR}.github.io.git, will be created"
+          mkdir -p docs/${{ github.event.repository.name }}
           cp -avr ../docs/build/html/. docs/${{ github.event.repository.name }}/
         working-directory: ${{ github.actor }}.github.io
 
@@ -46,9 +53,10 @@ jobs:
           git config --global user.email "${GITHUB_ACTOR}@https://users.noreply.github.com/"
           git config --global user.name "GitHub Actions Docs Update"
 
-      - name: Uploading docs
+      - name: Checking diffs and uploading docs if necessary
         run: |
           git add --all
+          git diff-index --quiet --cached HEAD -- && echo "No changes" && exit 0 || true
           git commit -m "${{ github.event.repository.name }}: ${GITHUB_SHA::8}"
           git push "https://${{ secrets.ACCESS_TOKEN }}@github.com/${GITHUB_ACTOR}/${GITHUB_ACTOR}.github.io.git" master
         working-directory: ${{ github.actor }}.github.io
