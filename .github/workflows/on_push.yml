@@ -1,0 +1,54 @@
+name: Build and update docs on push
+on: push
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@master
+
+      - uses: actions/setup-python@master
+        with:
+          python-version: '3.8'
+
+      - name: Installing tools for environment
+        run: python -m pip install --upgrade pip && python -m pip install pipenv
+
+      - name: Initialising venv
+        run: pipenv install --dev --system --verbose
+
+      - name: Building docs
+        run: make html
+        working-directory: docs
+
+      - name: Uploading docs as artifact
+        uses: actions/upload-artifact@master
+        with:
+          name: docs
+          path: docs/build/html
+
+      - name: Cloning pages repo
+        run: git clone  --depth 1 "https://github.com/${GITHUB_ACTOR}/${GITHUB_ACTOR}.github.io.git"
+
+      - name: Updating docs
+        run: |
+          git rm -rf docs/${{ github.event.repository.name }}
+          mkdir docs/${{ github.event.repository.name }}
+          cp -avr ../docs/build/html/. docs/${{ github.event.repository.name }}/
+        working-directory: ${{ github.actor }}.github.io
+
+      - name: Set git config
+        run: |
+          git config --global user.email "${GITHUB_ACTOR}@https://users.noreply.github.com/"
+          git config --global user.name "GitHub Actions Docs Update"
+
+      - name: Uploading docs
+        run: |
+          git add --all
+          git commit -m "${{ github.event.repository.name }}: ${GITHUB_SHA::8}"
+          git push "https://${{ secrets.ACCESS_TOKEN }}@github.com/${GITHUB_ACTOR}/${GITHUB_ACTOR}.github.io.git" master
+        working-directory: ${{ github.actor }}.github.io
