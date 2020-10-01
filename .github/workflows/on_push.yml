@@ -36,7 +36,7 @@ jobs:
 
       - name: Updating docs
         run: |
-          git rm -rf docs/${{ github.event.repository.name }}
+          git rm -rf docs/${{ github.event.repository.name }} || echo "Docs for ${{ github.event.repository.name }} not found on ${GITHUB_ACTOR}.github.io.git, creating..."
           mkdir docs/${{ github.event.repository.name }}
           cp -avr ../docs/build/html/. docs/${{ github.event.repository.name }}/
         working-directory: ${{ github.actor }}.github.io
