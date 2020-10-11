@@ -39,8 +39,6 @@ class StressTester:
         self._start_time = None
         self._end_time = None
 
-        self.ping()
-
     def _set_start_time(self):
         """
         Служебный метод для того, чтобы засечь время начала операции над InfluxDB
