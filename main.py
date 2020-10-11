@@ -1,8 +1,9 @@
-from stress_tester import StressTester
+from menu import get_menu
+import json
 
 
 if __name__ == '__main__':
-    tester = StressTester(
-        host='localhost',
-        port=8090
-    )
+    with open('influxdb_config.json', 'r') as fp:
+        config = json.load(fp)
+    menu = get_menu(config)
+    menu.call()

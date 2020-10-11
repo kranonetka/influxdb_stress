@@ -11,6 +11,7 @@
    :caption: Содержимое:
 
    stress_tester.rst
+   menu.rst
    scenarios.rst
 
 -------
