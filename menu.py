@@ -107,14 +107,6 @@ def _get_write_menu():
     
     return write_menu  # type: WriteMenu
 
-"""
-nodes_count: int,
-aggregation: str = 'mean',
-type: str = 'float',
-start_date: Union[datetime, str] = 'now() - 5m',
-end_date: Union[datetime, str] = 'now()',
-time_interval: str = '5s') -> Tuple[float, dict]:
-"""
 
 def _get_read_menu():
     class ReadMenu(DefaultMenu):
