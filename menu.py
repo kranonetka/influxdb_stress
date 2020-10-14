@@ -180,7 +180,7 @@ def get_menu(influxdb_config: dict):
     tester = StressTester(**influxdb_config)
     
     class MainMenu(DefaultMenu):
-        name = 'Главное меню'
+        name = 'InfluxDB Stress Tool'
     
     main_menu = MainMenu()
     main_menu_caller = MenuEntry(main_menu.name, main_menu.call)
